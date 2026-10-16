@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PesaPlane</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
+
+  :root {
+    --bg-app: #0a0f1c;
+    --bg-panel: #121929;
+    --bg-elev: #1a2333;
+    --bg-input: #0f1523;
+    --border: #1e293b;
+    --text-primary: #e2e8f0;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --accent: #f43f5e;
+    --accent-soft: rgba(244, 63, 94, 0.1);
+    --success: #10b981;
+    --success-soft: rgba(16, 185, 129, 0.1);
+    --warning: #f59e0b;
+  }
+
+  [data-theme="light"] {
+    --bg-app: #f1f5f9;
+    --bg-panel: #ffffff;
+    --bg-elev: #f8fafc;
+    --bg-input: #f1f5f9;
+    --border: #cbd5e1;
+    --text-primary: #0f172a;
+    --text-muted: #475569;
+    --text-dim: #64748b;
+    --accent: #e11d48;
+    --accent-soft: rgba(225, 29, 72, 0.08);
+    --success: #059669;
+    --success-soft: rgba(5, 150, 105, 0.1);
+    --warning: #d97706;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-app);
+    color: var(--text-primary);
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    transition: background-color 0.25s, color 0.25s;
+  }
+
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px) rotate(-1deg); }
+    50% { transform: translateX(4px) rotate(1deg); }
+    75% { transform: translateX(-2px) rotate(-0.5deg); }
+  }
+  .animate-shake { animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both; }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"] { -moz-appearance: textfield; }
+
+  /* Themed components */
+  .bg-app { background-color: var(--bg-app); }
+  .bg-panel { background-color: var(--bg-panel); }
+  .bg-elev { background-color: var(--bg-elev); }
+  .bg-input { background-color: var(--bg-input); }
+  .border-base { border-color: var(--border); }
+  .text-primary { color: var(--text-primary); }
+  .text-muted { color: var(--text-muted); }
+  .text-dim { color: var(--text-dim); }
+  .text-accent { color: var(--accent); }
+  .bg-accent { background-color: var(--accent); }
+  .text-success { color: var(--success); }
+  .bg-success { background-color: var(--success); }
+
+  .btn-accent { background-color: var(--accent); color: #fff; }
+  .btn-accent:hover { filter: brightness(1.1); }
+
+  .btn-success { background-color: var(--success); color: #fff; }
+  .btn-success:hover { filter: brightness(1.1); }
+
+  .modal-backdrop {
+    background-color: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+  }
+
+  /* plane image fallback */
+  .plane-fallback { font-size: 40px; }
+</style>
+</head>
+<body>
+
+<div class="flex flex-col h-screen w-full">
+
+  <!-- TOP BAR -->
+  <header class="h-14 lg:h-16 border-b border-base flex items-center justify-between px-4 shrink-0 shadow z-10 bg-panel">
+    <div class="flex items-center gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-accent fill-current w-6 h-6 lg:w-8 lg:h-8"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"></path></svg>
+      <h1 class="text-xl lg:text-2xl font-black tracking-tight text-primary uppercase italic">Pesa<span class="text-accent">Plane</span></h1>
+    </div>
+
+    <div class="flex items-center gap-2 lg:gap-4">
+      <!-- theme toggle -->
+      <button id="theme-toggle" title="Toggle theme" class="w-10 h-10 flex items-center justify-center rounded-full border border-base bg-elev hover:opacity-80 transition">
+        <svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg>
+      </button>
+
+      <div class="flex flex-col items-end">
+        <span class="text-xs text-muted font-medium">Balance</span>
+        <span id="balance-display" class="text-sm lg:text-lg font-bold text-success tracking-tight">Ksh 0.00</span>
+      </div>
+
+      <button id="deposit-btn" class="btn-success font-bold py-1.5 px-4 rounded-full text-sm transition shadow">DEPOSIT</button>
+
+      <div class="relative">
+        <button id="user-btn" class="hidden sm:flex items-center justify-center w-10 h-10 rounded-full border border-base bg-elev cursor-pointer hover:opacity-80 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        </button>
+        <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-panel border border-base rounded-lg shadow-lg z-50">
+          <div class="px-4 py-3 border-b border-base">
+            <div class="text-sm font-bold text-primary" id="menu-username">-</div>
+            <div class="text-xs text-muted truncate" id="menu-email">-</div>
+          </div>
+          <button id="menu-logout" class="w-full text-left px-4 py-2 text-sm text-primary hover:bg-elev transition">Logout</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
+    <div class="flex-1 flex flex-col min-w-0 lg:h-full">
+
+      <!-- HISTORY STRIP -->
+      <div class="h-10 lg:h-12 border-b border-base flex items-center px-2 space-x-1.5 overflow-x-auto no-scrollbar shrink-0 bg-input">
+        <div class="flex items-center px-2 border-r border-base mr-1 h-full">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-dim"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path><path d="M12 7v5l4 2"></path></svg>
+        </div>
+        <div id="history-container" class="flex items-center space-x-1.5 h-full"></div>
+      </div>
+
+      <!-- GAME CANVAS -->
+      <div id="game-container" class="flex-1 relative overflow-hidden min-h-[300px] lg:min-h-0 shrink-0 lg:shrink bg-app">
+        <canvas id="game-canvas" class="absolute inset-0 w-full h-full block pointer-events-none z-0"></canvas>
+
+        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
+          <div id="state-waiting" class="flex flex-col items-center hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-accent mb-4 animate-bounce fill-current"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"></path></svg>
+            <h2 class="text-2xl font-bold text-primary mb-2 tracking-wide">WAITING FOR NEXT ROUND</h2>
+            <div class="w-48 h-1.5 bg-input rounded-full overflow-hidden border border-base">
+              <div id="countdown-bar" class="h-full rounded-full transition-all duration-100 ease-linear" style="width: 0%; background-color: var(--accent);"></div>
+            </div>
+          </div>
+          <div id="state-running" class="text-[5rem] lg:text-[8rem] font-black tracking-tighter tabular-nums leading-none hidden text-primary">1.00x</div>
+          <div id="state-crashed" class="flex flex-col items-center hidden">
+            <div class="text-4xl lg:text-5xl font-black tracking-widest mb-2 text-accent">FLEW AWAY!</div>
+            <div id="crash-multiplier" class="text-[5rem] lg:text-[8rem] font-black tracking-tighter tabular-nums leading-none text-accent">1.00x</div>
+          </div>
+        </div>
+
+        <div class="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-sm border border-base text-xs text-muted z-10 bg-panel/60">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-success"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="m9 12 2 2 4-4"></path></svg>
+          <span id="fairness-label">Provably Fair</span>
+        </div>
+
+        <!-- toast -->
+        <div id="toast" class="absolute bottom-4 left-1/2 -translate-x-1/2 hidden px-4 py-2 rounded-lg text-sm font-bold shadow-lg z-30"></div>
+      </div>
+
+      <!-- BETTING PANELS -->
+      <div class="h-auto lg:h-[220px] border-t border-base p-2 lg:p-4 shrink-0 shadow z-20 bg-panel">
+        <div class="flex flex-col md:flex-row gap-2 lg:gap-4 h-full max-w-5xl mx-auto" id="betting-panels"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: LIVE BETS -->
+    <div class="w-full lg:w-[320px] border-l border-base flex flex-col h-[300px] lg:h-full shrink-0 z-10 bg-panel">
+      <div class="h-12 border-b border-base flex items-center justify-between px-4 shrink-0 bg-elev">
+        <div class="flex items-center gap-4 text-sm font-bold">
+          <button class="text-primary border-b-2 h-12" style="border-color: var(--accent)">All Bets</button>
+        </div>
+      </div>
+      <div class="flex items-center justify-between px-4 py-2 border-b border-base text-xs text-muted shrink-0 bg-input">
+        <span id="player-count">0 Players</span>
+        <span id="player-total">Total: Ksh 0.00</span>
+      </div>
+      <div class="flex items-center px-4 py-1.5 text-[10px] uppercase font-bold text-dim shrink-0">
+        <div class="w-24">User</div>
+        <div class="w-20 text-right">Bet</div>
+        <div class="w-16 text-right">Mult</div>
+        <div class="flex-1 text-right">Cash Out</div>
+      </div>
+      <div class="flex-1 overflow-y-auto no-scrollbar pb-4 relative">
+        <div id="players-list" class="divide-y" style="border-color: var(--border)"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- AUTH MODAL -->
+<div id="auth-modal" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-50">
+  <div class="bg-panel border border-base rounded-2xl p-6 w-full max-w-sm mx-4 shadow-2xl">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-black text-primary" id="auth-title">Welcome Back</h2>
+      <button id="auth-close" class="w-8 h-8 rounded-full hover:bg-elev flex items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="flex bg-input rounded-full p-1 mb-4 border border-base">
+      <button id="tab-login" class="flex-1 py-1.5 text-xs font-bold rounded-full">Login</button>
+      <button id="tab-register" class="flex-1 py-1.5 text-xs font-bold rounded-full">Register</button>
+    </div>
+
+    <div id="auth-error" class="hidden mb-3 text-xs bg-rose-500/10 text-rose-500 border border-rose-500/30 rounded-lg px-3 py-2"></div>
+
+    <div class="space-y-3">
+      <div id="field-username" class="hidden">
+        <label class="text-xs font-bold text-muted block mb-1">Username</label>
+        <input id="input-username" type="text" class="w-full bg-input border border-base rounded-lg px-3 py-2 text-sm text-primary focus:outline-none focus:border-slate-500" placeholder="Your name" />
+      </div>
+      <div>
+        <label class="text-xs font-bold text-muted block mb-1">Email</label>
+        <input id="input-email" type="email" class="w-full bg-input border border-base rounded-lg px-3 py-2 text-sm text-primary focus:outline-none focus:border-slate-500" placeholder="you@example.com" />
+      </div>
+      <div>
+        <label class="text-xs font-bold text-muted block mb-1">Password</label>
+        <input id="input-password" type="password" class="w-full bg-input border border-base rounded-lg px-3 py-2 text-sm text-primary focus:outline-none focus:border-slate-500" placeholder="••••••••" />
+      </div>
+      <button id="auth-submit" class="w-full btn-accent py-2.5 rounded-lg font-bold text-sm transition">Login</button>
+      <div class="text-center text-xs text-muted">
+        Demo: <span class="font-mono">demo@pesaplane.com / demo1234</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DEPOSIT MODAL -->
+<div id="deposit-modal" class="fixed inset-0 modal-backdrop hidden items-center justify-center z-50">
+  <div class="bg-panel border border-base rounded-2xl p-6 w-full max-w-sm mx-4 shadow-2xl">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-black text-primary">Deposit Funds</h2>
+      <button id="deposit-close" class="w-8 h-8 rounded-full hover:bg-elev flex items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="mb-4 p-3 rounded-lg bg-input border border-base">
+      <div class="text-xs text-muted">Current Balance</div>
+      <div class="text-lg font-black text-success" id="deposit-current-balance">Ksh 0.00</div>
+    </div>
+
+    <label class="text-xs font-bold text-muted block mb-1">Amount (Ksh)</label>
+    <input id="deposit-amount" type="number" value="500" class="w-full bg-input border border-base rounded-lg px-3 py-2.5 text-lg font-bold text-primary focus:outline-none focus:border-slate-500 mb-2" />
+
+    <div class="flex gap-2 mb-4">
+      <button class="deposit-quick flex-1 text-xs font-bold bg-input border border-base rounded-lg py-1.5" data-amount="100">100</button>
+      <button class="deposit-quick flex-1 text-xs font-bold bg-input border border-base rounded-lg py-1.5" data-amount="500">500</button>
+      <button class="deposit-quick flex-1 text-xs font-bold bg-input border border-base rounded-lg py-1.5" data-amount="1000">1K</button>
+      <button class="deposit-quick flex-1 text-xs font-bold bg-input border border-base rounded-lg py-1.5" data-amount="5000">5K</button>
+    </div>
+
+    <label class="text-xs font-bold text-muted block mb-1">Payment Method</label>
+    <div class="grid grid-cols-2 gap-2 mb-4">
+      <button class="method-btn py-2 rounded-lg border-2 text-xs font-bold bg-input border-base" data-method="mpesa">M-Pesa</button>
+      <button class="method-btn py-2 rounded-lg border-2 text-xs font-bold bg-input border-base" data-method="card">Card</button>
+    </div>
+
+    <div id="deposit-status" class="hidden mb-3 text-xs rounded-lg px-3 py-2"></div>
+
+    <button id="deposit-submit" class="w-full btn-success py-2.5 rounded-lg font-black text-sm transition">DEPOSIT</button>
+
+    <div id="deposit-history" class="mt-4 pt-4 border-t border-base hidden">
+      <div class="text-xs font-bold text-muted mb-2">Recent Deposits</div>
+      <div id="deposit-history-list" class="space-y-1 max-h-32 overflow-y-auto"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ---------- THEME ----------
+  const html = document.documentElement;
+  const themeBtn = document.getElementById('theme-toggle');
+  const sunIcon = document.getElementById('icon-sun');
+  const moonIcon = document.getElementById('icon-moon');
+
+  function setTheme(t) {
+    html.setAttribute('data-theme', t);
+    if (t === 'light') {
+      sunIcon.classList.remove('hidden');
+      moonIcon.classList.add('hidden');
+    } else {
+      moonIcon.classList.remove('hidden');
+      sunIcon.classList.add('hidden');
+    }
+    localStorage.setItem('pp-theme', t);
+  }
+  const savedTheme = localStorage.getItem('pp-theme') || 'dark';
+  setTheme(savedTheme);
+  themeBtn.addEventListener('click', () => {
+    setTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  });
+
+  // ---------- API ----------
+  const API = {
+    async post(path, body) {
+      const r = await fetch(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(body || {}),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.error || 'Request failed');
+      return data;
+    },
+    async get(path) {
+      const r = await fetch(path, { credentials: 'include' });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.error || 'Request failed');
+      return data;
+    },
+  };
+
+  // ---------- STATE ----------
+  const state = {
+    user: null,
+    balance: 0,
+    roundId: null,
+    gameState: 'waiting',
+    crashPoint: null,
+    startTime: 0,
+    waitingEndsAt: 0,
+    multiplier: 1.00,
+    history: [],
+    activeBets: [],
+    myBet: { amount: 100, autoCashout: 2.00, state: 'idle', winAmount: 0 },
+    bets: [
+      { id: 0, amount: 100, autoCashout: 0, state: 'idle', winAmount: 0 },
+    ],
+    lastCrashHandled: null,
+    fairnessLabel: 'Provably Fair',
+  };
+
+  // ---------- DOM ----------
+  const $ = id => document.getElementById(id);
+  const els = {
+    balance: $('balance-display'),
+    history: $('history-container'),
+    stateWaiting: $('state-waiting'),
+    stateRunning: $('state-running'),
+    stateCrashed: $('state-crashed'),
+    countdownBar: $('countdown-bar'),
+    crashMultiplier: $('crash-multiplier'),
+    bettingPanels: $('betting-panels'),
+    playerCount: $('player-count'),
+    playerTotal: $('player-total'),
+    playersList: $('players-list'),
+    gameContainer: $('game-container'),
+    canvas: $('game-canvas'),
+    fairnessLabel: $('fairness-label'),
+    toast: $('toast'),
+  };
+  const ctx = els.canvas.getContext('2d');
+
+  // ---------- UTILS ----------
+  const fmtCur = (n) => 'Ksh ' + Number(n || 0).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtMult = (m) => Number(m).toFixed(2) + 'x';
+
+  function toast(msg, type = 'info') {
+    els.toast.className = 'absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg text-sm font-bold shadow-lg z-30 ' + (
+      type === 'success' ? 'bg-emerald-500 text-white' :
+      type === 'error' ? 'bg-rose-500 text-white' :
+      'bg-slate-800 text-white'
+    );
+    els.toast.textContent = msg;
+    els.toast.classList.remove('hidden');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => els.toast.classList.add('hidden'), 2500);
+  }
+
+  // ---------- AUTH UI ----------
+  const authModal = $('auth-modal');
+  const depositModal = $('deposit-modal');
+  const userMenu = $('user-menu');
+  let authMode = 'login';
+
+  function showAuth(mode = 'login') {
+    authMode = mode;
+    $('auth-title').textContent = mode === 'login' ? 'Welcome Back' : 'Create Account';
+    $('auth-submit').textContent = mode === 'login' ? 'Login' : 'Create Account';
+    $('field-username').classList.toggle('hidden', mode === 'login');
+    $('tab-login').style.background = mode === 'login' ? 'var(--accent)' : 'transparent';
+    $('tab-login').style.color = mode === 'login' ? '#fff' : 'var(--text-muted)';
+    $('tab-register').style.background = mode === 'register' ? 'var(--accent)' : 'transparent';
+    $('tab-register').style.color = mode === 'register' ? '#fff' : 'var(--text-muted)';
+    $('auth-error').classList.add('hidden');
+    authModal.classList.remove('hidden');
+    authModal.classList.add('flex');
+  }
+  function hideAuth() {
+    authModal.classList.add('hidden');
+    authModal.classList.remove('flex');
+  }
+  $('auth-close').addEventListener('click', hideAuth);
+  $('tab-login').addEventListener('click', () => showAuth('login'));
+  $('tab-register').addEventListener('click', () => showAuth('register'));
+
+  $('auth-submit').addEventListener('click', async () => {
+    const email = $('input-email').value.trim();
+    const password = $('input-password').value;
+    const username = $('input-username').value.trim();
+    $('auth-error').classList.add('hidden');
+    try {
+      let res;
+      if (authMode === 'login') {
+        res = await API.post('/api/auth/login', { email, password });
+      } else {
+        if (!username) throw new Error('Username required');
+        res = await API.post('/api/auth/register', { email, username, password });
+      }
+      state.user = res.user;
+      state.balance = res.user.balance;
+      updateBalanceUI();
+      updateUserUI();
+      hideAuth();
+      toast('Welcome, ' + res.user.username, 'success');
+      refreshDepositHistory();
+    } catch (e) {
+      const err = $('auth-error');
+      err.textContent = e.message;
+      err.classList.remove('hidden');
+    }
+  });
+
+  // USER MENU
+  $('user-btn').addEventListener('click', () => {
+    userMenu.classList.toggle('hidden');
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#user-btn') && !e.target.closest('#user-menu')) {
+      userMenu.classList.add('hidden');
+    }
+  });
+  $('menu-logout').addEventListener('click', async () => {
+    await API.post('/api/auth/logout');
+    state.user = null;
+    state.balance = 0;
+    updateBalanceUI();
+    updateUserUI();
+    userMenu.classList.add('hidden');
+    toast('Logged out');
+  });
+
+  function updateBalanceUI() {
+    els.balance.textContent = fmtCur(state.balance);
+    const depBal = $('deposit-current-balance');
+    if (depBal) depBal.textContent = fmtCur(state.balance);
+  }
+
+  function updateUserUI() {
+    const btn = $('user-btn');
+    if (state.user) {
+      btn.classList.remove('hidden');
+      $('menu-username').textContent = state.user.username;
+      $('menu-email').textContent = state.user.email;
+    } else {
+      btn.classList.add('hidden');
+    }
+  }
+
+  // ---------- DEPOSIT UI ----------
+  let selectedMethod = 'mpesa';
+  $('deposit-btn').addEventListener('click', () => {
+    if (!state.user) { showAuth('login'); return; }
+    depositModal.classList.remove('hidden');
+    depositModal.classList.add('flex');
+    $('deposit-status').classList.add('hidden');
+    updateBalanceUI();
+  });
+  $('deposit-close').addEventListener('click', () => {
+    depositModal.classList.add('hidden');
+    depositModal.classList.remove('flex');
+  });
+  document.querySelectorAll('.deposit-quick').forEach(b => {
+    b.addEventListener('click', () => {
+      $('deposit-amount').value = b.dataset.amount;
+    });
+  });
+  document.querySelectorAll('.method-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      selectedMethod = b.dataset.method;
+      document.querySelectorAll('.method-btn').forEach(x => {
+        x.style.borderColor = x === b ? 'var(--accent)' : 'var(--border)';
+      });
+    });
+  });
+  // init method highlight
+  document.querySelector('.method-btn[data-method="mpesa"]').style.borderColor = 'var(--accent)';
+
+  $('deposit-submit').addEventListener('click', async () => {
+    const amount = Number($('deposit-amount').value);
+    if (!amount || amount <= 0) { toast('Enter valid amount', 'error'); return; }
+    const status = $('deposit-status');
+    status.className = 'mb-3 text-xs rounded-lg px-3 py-2 bg-input text-muted border border-base';
+    status.textContent = 'Processing deposit...';
+    status.classList.remove('hidden');
+
+    try {
+      const res = await API.post('/api/wallet/deposit', { amount, method: selectedMethod });
+      status.textContent = 'Waiting for confirmation...';
+
+      // Poll for completion
+      const poll = setInterval(async () => {
+        try {
+          const dep = await API.get('/api/wallet/deposit/' + res.depositId);
+          if (dep.status === 'completed') {
+            clearInterval(poll);
+            status.className = 'mb-3 text-xs rounded-lg px-3 py-2 bg-emerald-500/10 text-emerald-500 border border-emerald-500/30';
+            status.textContent = 'Deposit completed! +' + fmtCur(dep.amount);
+            const me = await API.get('/api/auth/me');
+            state.user = me.user;
+            state.balance = me.user.balance;
+            updateBalanceUI();
+            refreshDepositHistory();
+            toast('Deposited ' + fmtCur(dep.amount), 'success');
+            setTimeout(() => {
+              depositModal.classList.add('hidden');
+              depositModal.classList.remove('flex');
+            }, 1500);
+          }
+        } catch (e) { /* keep polling */ }
+      }, 800);
+      setTimeout(() => clearInterval(poll), 15000);
+    } catch (e) {
+      status.className = 'mb-3 text-xs rounded-lg px-3 py-2 bg-rose-500/10 text-rose-500 border border-rose-500/30';
+      status.textContent = e.message;
+    }
+  });
+
+  async function refreshDepositHistory() {
+    try {
+      // no dedicated endpoint; skip or extend later
+    } catch (e) {}
+  }
+
+  // ---------- HISTORY ----------
+  function renderHistory() {
+    els.history.innerHTML = state.history.map(h => {
+      const mult = h.crashPoint || h;
+      const classes = mult < 2.00 ? 'bg-slate-800 text-slate-400' :
+        mult < 10.0 ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' :
+          'bg-amber-500/10 text-amber-500 border border-amber-500/20';
+      return `<div class="flex items-center justify-center px-2.5 py-1 text-xs font-bold rounded-full min-w-[50px] shrink-0 cursor-pointer hover:opacity-80 transition-opacity ${classes}">${fmtMult(mult)}</div>`;
+    }).join('');
+  }
+
+  // ---------- PLAYERS ----------
+  function renderPlayers() {
+    const bets = state.activeBets || [];
+    els.playerCount.textContent = bets.length + ' Players';
+    els.playerTotal.textContent = 'Total: ' + fmtCur(bets.reduce((a, b) => a + b.amount, 0));
+    if (!bets.length) {
+      els.playersList.innerHTML = '<div class="px-4 py-6 text-center text-xs text-dim">No active bets</div>';
+      return;
+    }
+    els.playersList.innerHTML = bets.map(p => {
+      const isCashed = p.cashedOut;
+      const rowClass = 'flex items-center px-4 py-1.5 text-xs ' + (isCashed ? 'bg-emerald-500/5' : '');
+      const nameCls = isCashed ? 'text-emerald-500 font-medium' : 'text-primary';
+      const multHtml = isCashed
+        ? `<span class="text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded-md">${p.cashoutMult.toFixed(2)}x</span>`
+        : `<span class="text-dim">-</span>`;
+      const cashHtml = isCashed ? `<span class="text-emerald-500">${p.winAmount.toFixed(2)}</span>` : '';
+      return `
+        <div class="${rowClass}">
+          <div class="w-24 flex items-center gap-2 truncate">
+            <div class="w-5 h-5 rounded-full bg-input flex items-center justify-center shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-dim"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <span class="${nameCls}">${p.username || 'anon'}</span>
+          </div>
+          <div class="w-20 text-right tabular-nums text-muted font-medium">${p.amount}</div>
+          <div class="w-16 text-right tabular-nums font-bold">${multHtml}</div>
+          <div class="flex-1 text-right tabular-nums font-bold">${cashHtml}</div>
+        </div>`;
+    }).join('');
+  }
+
+  // ---------- BET PANEL ----------
+  function renderBettingPanels() {
+    els.bettingPanels.innerHTML = state.bets.map((bet, i) => {
+      let overlay = '';
+      if (bet.state === 'cashed_out') {
+        overlay = `
+          <div class="absolute inset-0 bg-emerald-500/10 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center border-2 border-emerald-500/50 rounded-xl">
+            <div class="bg-emerald-500 text-white font-black px-4 py-1 rounded-full text-sm mb-1">CASHED OUT</div>
+            <div class="text-2xl font-bold text-emerald-500">${fmtCur(bet.winAmount)}</div>
+          </div>`;
+      }
+      let btnClass = 'w-[120px] lg:w-[160px] rounded-lg font-black text-sm lg:text-lg flex flex-col items-center justify-center uppercase tracking-wide transition-all active:scale-95 shadow-lg ';
+      let btnContent = '';
+      let btnDisabled = '';
+
+      if (bet.state === 'idle') {
+        btnClass += 'btn-success';
+        btnContent = '<span>BET</span>';
+      } else if (bet.state === 'queued') {
+        btnClass += 'btn-accent';
+        btnContent = '<span class="text-xs opacity-80 mb-0.5">WAITING</span><span>CANCEL</span>';
+      } else if (bet.state === 'active') {
+        btnClass += 'bg-amber-500 text-white';
+        btnContent = `<span class="text-xs opacity-80 mb-0.5 leading-none">CASH OUT</span><span class="leading-none text-xl">${fmtMult(state.multiplier)}</span>`;
+      } else if (bet.state === 'cashed_out') {
+        btnClass += 'bg-slate-700 text-slate-400 cursor-not-allowed';
+        btnContent = '<span>BET</span>';
+        btnDisabled = 'disabled';
+      }
+      const inFlight = state.gameState === 'running' && bet.state === 'idle';
+      const disabledAttr = (bet.state !== 'idle' || inFlight) ? 'disabled' : '';
+
+      return `
+        <div class="flex-1 border border-base rounded-xl p-3 flex flex-col justify-between relative overflow-hidden bg-elev">
+          ${overlay}
+          <div class="flex justify-center mb-3">
+            <div class="flex bg-input rounded-full p-1 border border-base">
+              <button class="px-6 py-1.5 text-xs font-bold rounded-full" style="background: var(--accent); color: #fff">Bet</button>
+              <button class="px-6 py-1.5 text-xs font-bold text-muted">Auto</button>
+            </div>
+          </div>
+          <div class="flex items-stretch gap-3 lg:gap-4 h-14">
+            <div class="flex-1 bg-input rounded-lg flex items-center border border-base">
+              <button onclick="PP.updateBetAmount(${i}, -50)" class="w-10 h-full text-muted hover:opacity-80 border-r border-base rounded-l-lg" ${disabledAttr}>-</button>
+              <input type="number" onchange="PP.updateBetAmount(${i}, 0, this.value)" class="w-full bg-transparent text-center font-bold text-lg text-primary focus:outline-none tabular-nums" value="${bet.amount}" ${disabledAttr} />
+              <button onclick="PP.updateBetAmount(${i}, 50)" class="w-10 h-full text-muted hover:opacity-80 border-l border-base rounded-r-lg" ${disabledAttr}>+</button>
+            </div>
+            <button onclick="PP.handleBetAction(${i})" class="${btnClass}" ${btnDisabled}>
+              ${btnContent}
+            </button>
+          </div>
+          <div class="mt-3 flex items-center justify-between px-1">
+            <span class="text-xs text-dim font-medium">Quick Bets:</span>
+            <div class="flex gap-2">
+              ${[100, 200, 500, 1000].map(v => `<button onclick="PP.updateBetAmount(${i}, 0, ${v})" class="bg-input border border-base hover:opacity-80 text-muted text-xs py-1 px-3 rounded" ${disabledAttr}>${v}</button>`).join('')}
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ---------- GAME STATE ----------
+  function setOverlay(newState) {
+    els.stateWaiting.classList.add('hidden');
+    els.stateRunning.classList.add('hidden');
+    els.stateCrashed.classList.add('hidden');
+    els.gameContainer.classList.remove('animate-shake');
+
+    if (newState === 'waiting') {
+      els.stateWaiting.classList.remove('hidden');
+    } else if (newState === 'running') {
+      els.stateRunning.classList.remove('hidden');
+    } else if (newState === 'crashed') {
+      els.stateCrashed.classList.remove('hidden');
+      els.gameContainer.classList.add('animate-shake');
+      els.crashMultiplier.textContent = fmtMult(state.crashPoint);
+    }
+  }
+
+  // ---------- SSE ----------
+  function connectEvents() {
+    const es = new EventSource('/api/events');
+    es.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        handleEvent(msg);
+      } catch (err) { /* ignore */ }
+    };
+    es.onerror = () => {
+      // auto-reconnect handled by browser
+    };
+  }
+
+  function handleEvent(msg) {
+    switch (msg.type) {
+      case 'connected':
+        if (msg.state === 'waiting') {
+          state.gameState = 'waiting';
+          state.waitingEndsAt = msg.waitingEndsAt || 0;
+          setOverlay('waiting');
+        } else if (msg.state === 'running') {
+          state.gameState = 'running';
+          state.startTime = msg.startTime;
+          setOverlay('running');
+        } else if (msg.state === 'crashed') {
+          state.gameState = 'crashed';
+          setOverlay('crashed');
+        }
+        break;
+      case 'round_start':
+        state.roundId = msg.roundId;
+        state.gameState = 'waiting';
+        state.waitingEndsAt = msg.waitingEndsAt;
+        state.crashPoint = null;
+        state.multiplier = 1.00;
+        state.activeBets = [];
+        state.lastCrashHandled = null;
+        els.fairnessLabel.textContent = 'Seed: ' + (msg.serverSeedHash || '').slice(0, 10) + '…';
+        setOverlay('waiting');
+        // reset local bet states
+        state.bets.forEach(b => {
+          if (b.state === 'cashed_out') b.state = 'idle';
+          // queued stays queued
+        });
+        renderBettingPanels();
+        renderPlayers();
+        break;
+      case 'round_running':
+        state.roundId = msg.roundId;
+        state.gameState = 'running';
+        state.crashPoint = msg.crashPoint;
+        state.startTime = msg.startTime;
+        setOverlay('running');
+        // If user has a queued bet, mark as active now (server already accepted it)
+        state.bets.forEach(b => {
+          if (b.state === 'queued') b.state = 'active';
+        });
+        renderBettingPanels();
+        break;
+      case 'round_crashed':
+        state.gameState = 'crashed';
+        state.crashPoint = msg.crashPoint;
+        state.multiplier = msg.crashPoint;
+        setOverlay('crashed');
+        // history
+        state.history.unshift({ crashPoint: msg.crashPoint });
+        if (state.history.length > 20) state.history.pop();
+        renderHistory();
+        els.fairnessLabel.textContent = 'Seed: ' + (msg.serverSeed || '').slice(0, 10) + '…';
+        // reset lost user bets
+        state.bets.forEach(b => {
+          if (b.state === 'active') b.state = 'idle';
+        });
+        renderBettingPanels();
+        break;
+      case 'bet_placed':
+        // merge into active bets
+        if (msg.roundId === state.roundId) {
+          const exists = state.activeBets.find(b => b.uid === msg.bet.uid);
+          if (!exists) state.activeBets.push(msg.bet);
+          renderPlayers();
+        }
+        break;
+      case 'bet_cashout':
+        if (msg.roundId === state.roundId) {
+          const b = state.activeBets.find(x => x.uid === msg.uid);
+          if (b) {
+            b.cashedOut = true;
+            b.cashoutMult = msg.mult;
+            b.winAmount = msg.winAmount;
+            renderPlayers();
+          }
+        }
+        // if it's me, update balance
+        if (state.user && msg.uid === state.user.uid) {
+          refreshBalance();
+        }
+        break;
+      case 'deposit_completed':
+        if (state.user && msg.uid === state.user.uid) {
+          refreshBalance();
+          toast('Deposit confirmed! +' + fmtCur(msg.amount), 'success');
+        }
+        break;
+    }
+  }
+
+  async function refreshBalance() {
+    try {
+      const me = await API.get('/api/auth/me');
+      state.user = me.user;
+      state.balance = me.user.balance;
+      updateBalanceUI();
+    } catch (e) {}
+  }
+
+  // ---------- BET ACTIONS ----------
+  window.PP = {
+    updateBetAmount: (index, delta, exactVal = null) => {
+      const b = state.bets[index];
+      if (!b) return;
+      if (exactVal !== null) b.amount = Math.max(10, Number(exactVal));
+      else b.amount = Math.max(10, b.amount + delta);
+      renderBettingPanels();
+    },
+    handleBetAction: async (index) => {
+      if (!state.user) { showAuth('login'); return; }
+      const b = state.bets[index];
+      if (!b) return;
+
+      try {
+        if (state.gameState === 'waiting') {
+          if (b.state === 'idle') {
+            const res = await API.post('/api/bet/place', { amount: b.amount, autoCashout: b.autoCashout });
+            b.state = 'queued';
+            state.balance = res.balance;
+            updateBalanceUI();
+            renderBettingPanels();
+          } else if (b.state === 'queued') {
+            // Can't cancel server-side once placed (simplify: allow local cancel + refund via new endpoint)
+            // For simplicity, we'll block cancel if server already has it. Show message.
+            toast('Bet locked. Wait for round to start.', 'info');
+          }
+        } else if (state.gameState === 'running') {
+          if (b.state === 'active') {
+            const res = await API.post('/api/bet/cashout');
+            b.state = 'cashed_out';
+            b.winAmount = res.winAmount;
+            state.balance = res.newBalance;
+            updateBalanceUI();
+            renderBettingPanels();
+            toast('Cashed out at ' + fmtMult(res.mult), 'success');
+          } else if (b.state === 'idle') {
+            toast('Round already running. Wait for next round.', 'error');
+          }
+        } else {
+          toast('Round ending, wait...', 'info');
+        }
+      } catch (e) {
+        toast(e.message, 'error');
+      }
+    },
+  };
+
+  // ---------- COUNTDOWN TICKER ----------
+  setInterval(() => {
+    if (state.gameState === 'waiting' && state.waitingEndsAt) {
+      const remaining = Math.max(0, state.waitingEndsAt - Date.now());
+      const total = 7000;
+      els.countdownBar.style.width = ((1 - remaining / total) * 100) + '%';
+    }
+  }, 50);
+
+  // ---------- CANVAS RENDER ----------
+  const planeImage = new Image();
+  planeImage.src = 'https://cdn-icons-png.flaticon.com/512/723/723782.png';
+  let planeReady = false;
+  planeImage.onload = () => planeReady = true;
+
+  let trail = [];
+  let lastPos = { x: 0, y: 0 };
+  let flyOff = { x: 0, y: 0, vx: 0, vy: 0, active: false };
+
+  function currentMult() {
+    if (state.gameState === 'running') {
+      const elapsed = Date.now() - state.startTime;
+      return Math.pow(Math.E, 0.00006 * elapsed);
+    }
+    if (state.gameState === 'crashed') return state.crashPoint || 1.00;
+    return 1.00;
+  }
+
+  function renderCanvas() {
+    const w = els.gameContainer.clientWidth;
+    const h = els.gameContainer.clientHeight;
+    const dpr = window.devicePixelRatio || 1;
+    if (els.canvas.width !== w * dpr || els.canvas.height !== h * dpr) {
+      els.canvas.width = w * dpr;
+      els.canvas.height = h * dpr;
+      els.canvas.style.width = w + 'px';
+      els.canvas.style.height = h + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    ctx.clearRect(0, 0, w, h);
+
+    // grid
+    const gridSize = 50;
+    const mult = currentMult();
+    const panX = state.gameState !== 'waiting' ? (mult * 20) % gridSize : 0;
+    const panY = state.gameState !== 'waiting' ? (mult * 10) % gridSize : 0;
+    ctx.strokeStyle = 'rgba(100, 116, 139, 0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let x = -panX; x <= w; x += gridSize) { ctx.moveTo(x, 0); ctx.lineTo(x, h); }
+    for (let y = h + panY; y >= 0; y -= gridSize) { ctx.moveTo(0, y); ctx.lineTo(w, y); }
+    ctx.stroke();
+
+    if (state.gameState === 'waiting') {
+      requestAnimationFrame(renderCanvas);
+      return;
+    }
+
+    // curve
+    const startX = 0, startY = h;
+    const maxW = w * 0.8, maxH = h * 0.8;
+    const pX = Math.min((mult - 1) / 3, 1);
+    const pY = Math.min((mult - 1) / 5, 1);
+    const curX = startX + pX * maxW + Math.log10(Math.max(1, mult)) * 50;
+    const curY = startY - pY * maxH - Math.log10(Math.max(1, mult)) * 20;
+
+    const isCrashed = state.gameState === 'crashed';
+    const color = isCrashed ? '#ef4444' : '#f43f5e';
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.quadraticCurveTo(curX * 0.7, startY, curX, curY);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = color;
+    ctx.stroke();
+    ctx.restore();
+
+    // fill
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.quadraticCurveTo(curX * 0.7, startY, curX, curY);
+    ctx.lineTo(curX, startY);
+    ctx.closePath();
+    const grad = ctx.createLinearGradient(0, curY, 0, startY);
+    grad.addColorStop(0, isCrashed ? 'rgba(239,68,68,0.2)' : 'rgba(244,63,94,0.4)');
+    grad.addColorStop(1, 'rgba(244,63,94,0)');
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    const angle = Math.atan2(curY - lastPos.y, curX - lastPos.x);
+
+    // trail
+    if (!isCrashed && state.gameState === 'running') {
+      trail.push({ x: curX - Math.cos(angle) * 15, y: curY - Math.sin(angle) * 15, life: 1, size: Math.random() * 3 + 1 });
+    }
+    trail = trail.filter(p => p.life > 0);
+    trail.forEach(p => {
+      p.life -= 0.03; p.x -= 0.5; p.y += 0.2;
+      ctx.globalAlpha = Math.max(0, p.life);
+      ctx.fillStyle = '#f43f5e';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, Math.max(0, p.size * p.life), 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+
+    // plane
+    ctx.save();
+    let dx = curX, dy = curY;
+    if (isCrashed) {
+      if (!flyOff.active) {
+        flyOff.active = true;
+        flyOff.x = 0; flyOff.y = 0;
+        flyOff.vx = Math.cos(angle) * 5;
+        flyOff.vy = Math.sin(angle) * 5;
+      }
+      flyOff.vx *= 1.12;
+      flyOff.vy *= 1.12;
+      flyOff.x += flyOff.vx;
+      flyOff.y += flyOff.vy;
+      dx += flyOff.x;
+      dy += flyOff.y;
+    } else {
+      flyOff.active = false;
+    }
+
+    ctx.translate(dx, dy);
+    if (planeReady) {
+      const baseTilt = 20 * (Math.PI / 180);
+      ctx.rotate(angle - baseTilt);
+      const imgW = 80;
+      const imgH = (planeImage.naturalHeight / planeImage.naturalWidth) * imgW;
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = color;
+      ctx.drawImage(planeImage, -imgW / 2, -imgH / 2, imgW, imgH);
+    } else {
+      // fallback emoji
+      ctx.rotate(angle);
+      ctx.font = '40px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('✈️', 0, 0);
+    }
+    ctx.restore();
+
+    if (state.gameState === 'running') lastPos = { x: curX, y: curY };
+
+    // update running overlay multiplier
+    if (state.gameState === 'running') {
+      state.multiplier = mult;
+      els.stateRunning.textContent = fmtMult(mult);
+      // update cashout button
+      state.bets.forEach((b, i) => {
+        if (b.state === 'active') {
+          const btn = els.bettingPanels.querySelectorAll('button')[i * 8 + 5];
+          // simpler: force rerender panel occasionally
+        }
+      });
+      // lightweight: update button text via query
+      const btnMults = els.bettingPanels.querySelectorAll('.text-xl');
+      btnMults.forEach(el => el.textContent = fmtMult(mult));
+    }
+
+    requestAnimationFrame(renderCanvas);
+  }
+
+  // ---------- BOOT ----------
+  async function boot() {
+    renderHistory();
+    renderBettingPanels();
+    renderPlayers();
+    setOverlay('waiting');
+    connectEvents();
+
+    // try restore session
+    try {
+      const me = await API.get('/api/auth/me');
+      state.user = me.user;
+      state.balance = me.user.balance;
+      updateBalanceUI();
+      updateUserUI();
+    } catch (e) {
+      updateUserUI();
+    }
+
+    // load history
+    try {
+      const hist = await API.get('/api/game/history');
+      state.history = hist.rounds || [];
+      renderHistory();
+    } catch (e) {}
+
+    requestAnimationFrame(renderCanvas);
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>
